@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nanjing-Zhenjiang International Adventist Fellowship — Treasury System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/font-awesome.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1a2744;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --cream: #faf8f3;
+    --white: #ffffff;
+    --slate: #4a5568;
+    --border: #e2d9c8;
+    --accent: #2c5282;
+    --success: #2d6a4f;
+    --light-bg: #f0ede5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: #e8e4db;
+    min-height: 100vh;
+    color: var(--navy);
+  }
+
+  /* ===================== SIDEBAR ===================== */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    background: var(--navy);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+  }
+
+  .sidebar-logo {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  .sidebar-logo img {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .sidebar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #e8e0cc;
+  }
+
+  .sidebar-subtitle {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-nav { flex: 1; padding: 16px 0; }
+
+  .nav-section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3);
+    padding: 12px 20px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.7);
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover, .nav-item.active {
+    background: rgba(255,255,255,0.07);
+    color: white;
+    border-left-color: var(--gold);
+  }
+
+  .nav-item i { width: 16px; font-size: 13px; color: var(--gold-light); }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ===================== MAIN ===================== */
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+  .topbar-date { font-size: 12px; color: var(--slate); }
+
+  .topbar-actions { display: flex; gap: 10px; }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-gold { background: var(--gold); color: white; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: white; color: var(--navy); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--light-bg); }
+  .btn-danger { background: #c53030; color: white; font-size: 12px; padding: 6px 12px; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  .page { display: none; padding: 28px 32px; }
+  .page.active { display: block; }
+
+  /* ===================== DASHBOARD STATS ===================== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gold);
+  }
+
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--slate); margin-bottom: 8px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--navy); }
+  .stat-sub { font-size: 11px; color: var(--slate); margin-top: 4px; }
+  .stat-icon { position: absolute; right: 16px; top: 16px; font-size: 22px; color: var(--border); }
+
+  .stats-grid-wide {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  /* ===================== PANEL ===================== */
+  .panel {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .panel-header {
+    padding: 16px 20px;
+    background: var(--navy);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title { font-family: 'Playfair Display', serif; font-size: 15px; }
+  .panel-body { padding: 24px; }
+
+  /* ===================== FORM ===================== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate); }
+
+  input, select, textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13.5px;
+    color: var(--navy);
+    background: var(--cream);
+    transition: border 0.2s;
+    outline: none;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); background: white; }
+
+  .divider-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    font-weight: 600;
+    padding: 14px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===================== TABLE ===================== */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--light-bg); }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--slate);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--navy); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--cream); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-tithe { background: #e8f4ff; color: #1a5276; }
+  .badge-offering { background: #edf7ee; color: #1a5c2c; }
+  .badge-special { background: #fff8e6; color: #7d5a00; }
+  .badge-building { background: #f5eef8; color: #6c3483; }
+  .badge-mission { background: #fdecea; color: #7b2427; }
+  .badge-other { background: #f0ede5; color: #5a4e3a; }
+
+  /* ===================== SUMMARY ROW ===================== */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .summary-box {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .summary-box .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate); margin-bottom: 4px; }
+  .summary-box .s-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--navy); }
+
+  .total-box {
+    background: var(--navy);
+    color: white;
+  }
+  .total-box .s-label { color: rgba(255,255,255,0.6); }
+  .total-box .s-val { color: var(--gold-light); }
+
+  /* ===================== RECEIPT PREVIEW (PDF) ===================== */
+  #receipt-preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #receipt-preview-overlay.show { display: flex; }
+
+  .receipt-modal {
+    background: white;
+    border-radius: 10px;
+    width: 680px;
+    max-height: 95vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .receipt-modal-header {
+    background: var(--navy);
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky; top: 0;
+  }
+
+  #close-preview { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+
+  /* ===================== RECEIPT PRINT TEMPLATE ===================== */
+  #receipt-print {
+    font-family: 'Source Sans 3', sans-serif;
+    padding: 36px 40px;
+    max-width: 620px;
+    margin: 0 auto;
+    font-size: 12px;
+    color: #1a2744;
+  }
+
+  .r-church-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .r-sub {
+    font-size: 10px;
+    color: var(--slate);
+    text-align: center;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .r-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+  }
+
+  .r-divider-gold {
+    border: none;
+    border-top: 2px solid var(--gold);
+    margin: 10px 0;
+  }
+
+  .r-receipt-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin: 6px 0;
+    background: var(--light-bg);
+    padding: 6px;
+    border-radius: 4px;
+  }
+
+  .r-meta {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 11.5px;
+  }
+
+  .r-meta span strong { color: var(--navy); }
+
+  .r-member-box {
+    background: var(--light-bg);
+    border-left: 3px solid var(--gold);
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    margin: 8px 0;
+  }
+
+  .r-member-box .r-name { font-size: 14px; font-weight: 700; font-family: 'Playfair Display', serif; color: var(--navy); }
+  .r-member-box .r-member-id { font-size: 10px; color: var(--slate); }
+
+  .r-contributions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 11.5px;
+  }
+
+  .r-contributions-table th {
+    background: var(--navy);
+    color: white;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .r-contributions-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .r-contributions-table tr:nth-child(even) td { background: var(--cream); }
+  .r-contributions-table .amount { text-align: right; font-weight: 600; }
+
+  .r-total-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .r-total-box {
+    background: var(--navy);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .r-total-box .t-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; }
+  .r-total-box .t-val { font-size: 18px; font-family: 'Playfair Display', serif; font-weight: 700; color: var(--gold-light); }
+
+  .r-purpose {
+    background: #fff8e6;
+    border: 1px solid #e6c96e;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    margin: 8px 0;
+    color: #5a4e00;
+  }
+
+  .r-sig-area {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 20px;
+  }
+
+  .r-sig {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: var(--slate);
+  }
+
+  .r-sig-line {
+    border-top: 1px solid var(--navy);
+    margin-bottom: 4px;
+    margin-top: 30px;
+  }
+
+  .r-verse-box {
+    margin-top: 14px;
+    border-top: 2px solid var(--gold);
+    padding-top: 10px;
+    text-align: center;
+  }
+
+  .r-verse-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--navy);
+    line-height: 1.6;
+  }
+
+  .r-verse-ref {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .r-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 9px;
+    color: rgba(100,100,100,0.6);
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  .r-social {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .r-logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .r-logo-icon {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+
+  .r-logo-icon img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+  }
+
+  /* ===================== MODAL ALERT ===================== */
+  .toast {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: var(--success);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: all 0.3s;
+  }
+  .toast.show { opacity: 1; transform: translateX(0); }
+
+  /* ===================== RESPONSIVE TABLE WRAPPER ===================== */
+  .table-wrap { overflow-x: auto; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--slate);
+  }
+
+  .empty-state i { font-size: 40px; color: var(--border); margin-bottom: 12px; display: block; }
+
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .search-bar input { flex: 1; }
+
+  select.filter-sel { width: 160px; }
+
+  .info-note {
+    background: #e8f0fe;
+    border-left: 3px solid #2c5282;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: #1a365d;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .month-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .month-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .month-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* ===================== CHARTS ===================== */
+  .chart-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .chart-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .chart-label { width: 110px; text-align: right; color: var(--slate); }
+  .chart-bar-track { flex: 1; background: var(--light-bg); border-radius: 4px; height: 20px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: white; transition: width 0.6s ease; }
+  .chart-value { width: 80px; font-weight: 600; color: var(--navy); }
+
+  .fill-tithe { background: #1a5276; }
+  .fill-offering { background: #2d6a4f; }
+  .fill-mission { background: #922b21; }
+  .fill-building { background: #6c3483; }
+  .fill-other { background: #7d6608; }
+
+  /* ===================== ACCOUNT LEDGER ===================== */
+  .account-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .account-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .account-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .account-card.tithe::after { background: #1a5276; }
+  .account-card.offering::after { background: #2d6a4f; }
+  .account-card.mission::after { background: #922b21; }
+  .account-card.building::after { background: #6c3483; }
+  .account-card.welfare::after { background: #d35400; }
+  .account-card.general::after { background: #b8860b; }
+
+  .account-card-icon { font-size: 20px; margin-bottom: 8px; }
+  .account-card-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate); }
+  .account-card-balance { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--navy); margin-top: 4px; }
+  .account-card-count { font-size: 11px; color: var(--slate); margin-top: 2px; }
+
+  /* WATERMARK */
+  #receipt-print {
+    position: relative;
+  }
+  .receipt-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px;
+    height: 380px;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+  }
+  #receipt-print > *:not(.receipt-watermark) {
+    position: relative;
+    z-index: 1;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><img src="data:image/png;base64,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" alt="SDA Logo" style="width:110px;height:110px;object-fit:cover;border-radius:10px;"></div>
+      <div class="sidebar-title">Nanjing-Zhenjiang<br>International Adventist<br>Fellowship</div>
+      <div class="sidebar-subtitle">Treasury Management System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <i class="fas fa-th-large"></i> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('new-receipt')">
+        <i class="fas fa-file-invoice-dollar"></i> New Receipt
+      </div>
+      <div class="nav-section-label">Records</div>
+      <div class="nav-item" onclick="showPage('records')">
+        <i class="fas fa-list-alt"></i> All Receipts
+      </div>
+      <div class="nav-item" onclick="showPage('members')">
+        <i class="fas fa-users"></i> Members
+      </div>
+      <div class="nav-section-label">Finance</div>
+      <div class="nav-item" onclick="showPage('accounts')">
+        <i class="fas fa-wallet"></i> Fund Accounts
+      </div>
+      <div class="nav-item" onclick="showPage('reports')">
+        <i class="fas fa-chart-bar"></i> Reports
+      </div>
+      <div class="nav-item" onclick="showPage('signatures')">
+        <i class="fas fa-pen-nib"></i> Signatures
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <i class="fab fa-facebook-square"></i> &nbsp;
+      <i class="fab fa-instagram"></i><br>
+      Nanjing-Zhenjiang Int'l Adventist Fellowship<br>
+      Nanjing, China
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Treasury Management System</div>
+        <div class="topbar-date" id="current-date-display"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-gold" onclick="showPage('new-receipt')"><i class="fas fa-plus"></i> New Receipt</button>
+      </div>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Tithe</div>
+          <div class="stat-value" id="dash-tithe">¥0.00</div>
+          <div class="stat-sub">All time collected</div>
+          <i class="fas fa-bible stat-icon"></i>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Offerings</div>
+          <div class="stat-value" id="dash-offering">¥0.00</div>
+          <div class="stat-sub">General & Special</div>
+          <i class="fas fa-hand-holding-heart stat-icon"></i>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Mission & Welfare</div>
+          <div class="stat-value" id="dash-mission">¥0.00</div>
+          <div class="stat-sub">Outreach funds</div>
+          <i class="fas fa-globe stat-icon"></i>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Grand Total</div>
+          <div class="stat-value" id="dash-total">¥0.00</div>
+          <div class="stat-sub" id="dash-receipt-count">0 receipts issued</div>
+          <i class="fas fa-church stat-icon"></i>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fas fa-chart-bar" style="color:var(--gold);margin-right:8px"></i>Fund Distribution</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart-bar" id="dash-chart">
+              <div class="empty-state"><i class="fas fa-chart-bar"></i><p>No records yet</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fas fa-clock" style="color:var(--gold);margin-right:8px"></i>Recent Receipts</span>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div id="dash-recent">
+              <div class="empty-state" style="padding:32px"><i class="fas fa-receipt"></i><p>No receipts yet</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== NEW RECEIPT ========== -->
+    <div class="page" id="page-new-receipt">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-file-invoice-dollar" style="color:var(--gold);margin-right:8px"></i>Issue New Receipt</span>
+        </div>
+        <div class="panel-body">
+          <div class="info-note"><i class="fas fa-info-circle"></i> All contributions are gratefully acknowledged. This receipt is issued for the glory of God.</div>
+
+          <div class="divider-label"><i class="fas fa-user"></i> Member Information</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="r-name" placeholder="e.g. John & Mary Smith">
+            </div>
+            <div class="form-group">
+              <label>Member ID / Envelope No.</label>
+              <input type="text" id="r-member-id" placeholder="e.g. NZI-2025-001">
+            </div>
+            <div class="form-group">
+              <label>Contact / Phone</label>
+              <input type="text" id="r-contact" placeholder="+86 ...">
+            </div>
+            <div class="form-group">
+              <label>Date of Contribution *</label>
+              <input type="date" id="r-date">
+            </div>
+          </div>
+
+          <div class="divider-label" style="margin-top:18px"><i class="fas fa-coins"></i> Contributions</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label>Tithe (¥)</label>
+              <input type="number" id="r-tithe" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>General Offering (¥)</label>
+              <input type="number" id="r-offering" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Sabbath School Offering (¥)</label>
+              <input type="number" id="r-ss" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Mission/Evangelism Fund (¥)</label>
+              <input type="number" id="r-mission" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Building / Facility Fund (¥)</label>
+              <input type="number" id="r-building" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Welfare / Community Aid (¥)</label>
+              <input type="number" id="r-welfare" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Church Program Fund (¥)</label>
+              <input type="number" id="r-program" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Other / Special Gift (¥)</label>
+              <input type="number" id="r-other" placeholder="0.00" min="0" step="0.01" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="r-method">
+                <option>Cash</option>
+                <option>WeChat Pay</option>
+                <option>Alipay</option>
+                <option>Bank Transfer</option>
+                <option>Envelope</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:12px">
+            <label>Remarks / Specific Purpose</label>
+            <input type="text" id="r-purpose" placeholder="e.g. Designated for youth camp, in memory of...">
+          </div>
+
+          <!-- Total display -->
+          <div style="margin-top:20px; background: var(--navy); color:white; border-radius:8px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px;">Total Contribution</div>
+              <div style="font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:var(--gold-light);" id="r-total-display">¥ 0.00</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-outline" onclick="clearForm()"><i class="fas fa-redo"></i> Clear</button>
+              <button class="btn btn-gold" onclick="previewReceipt()"><i class="fas fa-eye"></i> Preview Receipt</button>
+              <button class="btn btn-primary" onclick="saveReceipt()"><i class="fas fa-save"></i> Save & Issue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== RECORDS ========== -->
+    <div class="page" id="page-records">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-list-alt" style="color:var(--gold);margin-right:8px"></i>All Contribution Records</span>
+          <span id="records-count" style="font-size:12px;color:rgba(255,255,255,0.6)"></span>
+        </div>
+        <div class="panel-body">
+          <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search by name or receipt number..." oninput="renderRecords()">
+            <select class="filter-sel" id="filter-type" onchange="renderRecords()">
+              <option value="">All Funds</option>
+              <option value="tithe">Tithe</option>
+              <option value="offering">Offering</option>
+              <option value="mission">Mission</option>
+              <option value="building">Building</option>
+              <option value="welfare">Welfare</option>
+              <option value="program">Program</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt #</th>
+                  <th>Date</th>
+                  <th>Member Name</th>
+                  <th>Tithe</th>
+                  <th>Offering</th>
+                  <th>S.S.</th>
+                  <th>Mission</th>
+                  <th>Building</th>
+                  <th>Welfare</th>
+                  <th>Program</th>
+                  <th>Other</th>
+                  <th>Total</th>
+                  <th>Method</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody">
+                <tr><td colspan="14" class="empty-state" style="padding:32px"><i class="fas fa-receipt" style="font-size:28px;display:block;margin-bottom:8px;color:var(--border)"></i>No records yet. Issue your first receipt above.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-row" id="summary-row">
+            <div class="summary-box"><div class="s-label">Total Tithe</div><div class="s-val" id="sum-tithe">¥0.00</div></div>
+            <div class="summary-box"><div class="s-label">Total Offering</div><div class="s-val" id="sum-offering">¥0.00</div></div>
+            <div class="summary-box"><div class="s-label">Mission</div><div class="s-val" id="sum-mission">¥0.00</div></div>
+            <div class="summary-box"><div class="s-label">Building</div><div class="s-val" id="sum-building">¥0.00</div></div>
+            <div class="summary-box total-box"><div class="s-label">Grand Total</div><div class="s-val" id="sum-total">¥0.00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MEMBERS ========== -->
+    <div class="page" id="page-members">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-users" style="color:var(--gold);margin-right:8px"></i>Member Registry</span>
+          <button class="btn btn-gold btn-sm" onclick="addMember()"><i class="fas fa-plus"></i> Add Member</button>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid" id="member-form" style="display:none; margin-bottom:20px; background:var(--cream); padding:16px; border-radius:8px; border:1px solid var(--border);">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="m-name" placeholder="Full Name">
+            </div>
+            <div class="form-group">
+              <label>Member ID</label>
+              <input type="text" id="m-id" placeholder="e.g. NZI-001">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="m-phone">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="m-email">
+            </div>
+            <div class="form-group full" style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
+              <button class="btn btn-outline" onclick="cancelMember()"><i class="fas fa-times"></i> Cancel</button>
+              <button class="btn btn-primary" onclick="saveMember()"><i class="fas fa-save"></i> Save Member</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Member ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Total Contributed</th><th>Receipts</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="members-tbody">
+                <tr><td colspan="7"><div class="empty-state" style="padding:32px"><i class="fas fa-users" style="font-size:28px;display:block;margin-bottom:8px;color:var(--border)"></i>No members registered yet.</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ACCOUNTS ========== -->
+    <div class="page" id="page-accounts">
+      <div class="account-cards">
+        <div class="account-card tithe">
+          <div class="account-card-icon" style="color:#1a5276"><i class="fas fa-bible"></i></div>
+          <div class="account-card-name">Tithe Fund</div>
+          <div class="account-card-balance" id="ac-tithe">¥0.00</div>
+          <div class="account-card-count" id="ac-tithe-c">0 contributors</div>
+        </div>
+        <div class="account-card offering">
+          <div class="account-card-icon" style="color:#2d6a4f"><i class="fas fa-hand-holding-heart"></i></div>
+          <div class="account-card-name">General Offering</div>
+          <div class="account-card-balance" id="ac-offering">¥0.00</div>
+          <div class="account-card-count" id="ac-offering-c">0 contributors</div>
+        </div>
+        <div class="account-card" style="">
+          <div class="account-card-icon" style="color:#1a5276"><i class="fas fa-school"></i></div>
+          <div class="account-card-name">Sabbath School</div>
+          <div class="account-card-balance" id="ac-ss">¥0.00</div>
+          <div class="account-card-count" id="ac-ss-c">0 contributors</div>
+        </div>
+        <div class="account-card mission">
+          <div class="account-card-icon" style="color:#922b21"><i class="fas fa-globe"></i></div>
+          <div class="account-card-name">Mission / Evangelism</div>
+          <div class="account-card-balance" id="ac-mission">¥0.00</div>
+          <div class="account-card-count" id="ac-mission-c">0 contributors</div>
+        </div>
+        <div class="account-card building">
+          <div class="account-card-icon" style="color:#6c3483"><i class="fas fa-building"></i></div>
+          <div class="account-card-name">Building / Facility</div>
+          <div class="account-card-balance" id="ac-building">¥0.00</div>
+          <div class="account-card-count" id="ac-building-c">0 contributors</div>
+        </div>
+        <div class="account-card welfare">
+          <div class="account-card-icon" style="color:#d35400"><i class="fas fa-hands-helping"></i></div>
+          <div class="account-card-name">Welfare / Community</div>
+          <div class="account-card-balance" id="ac-welfare">¥0.00</div>
+          <div class="account-card-count" id="ac-welfare-c">0 contributors</div>
+        </div>
+        <div class="account-card general">
+          <div class="account-card-icon" style="color:#b8860b"><i class="fas fa-calendar-alt"></i></div>
+          <div class="account-card-name">Church Program Fund</div>
+          <div class="account-card-balance" id="ac-program">¥0.00</div>
+          <div class="account-card-count" id="ac-program-c">0 contributors</div>
+        </div>
+        <div class="account-card general">
+          <div class="account-card-icon" style="color:#b8860b"><i class="fas fa-gift"></i></div>
+          <div class="account-card-name">Other / Special Gifts</div>
+          <div class="account-card-balance" id="ac-other">¥0.00</div>
+          <div class="account-card-count" id="ac-other-c">0 contributors</div>
+        </div>
+        <div class="account-card" style="background:var(--navy);">
+          <div class="account-card-icon" style="color:var(--gold-light)"><i class="fas fa-church"></i></div>
+          <div class="account-card-name" style="color:rgba(255,255,255,0.6)">Grand Total</div>
+          <div class="account-card-balance" style="color:var(--gold-light)" id="ac-grand">¥0.00</div>
+          <div class="account-card-count" style="color:rgba(255,255,255,0.4)" id="ac-grand-c">All funds combined</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== REPORTS ========== -->
+    <div class="page" id="page-reports">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-chart-pie" style="color:var(--gold);margin-right:8px"></i>Financial Summary Report</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;">
+            <div class="form-group" style="flex:1">
+              <label>From Date</label>
+              <input type="date" id="rep-from">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>To Date</label>
+              <input type="date" id="rep-to">
+            </div>
+            <div style="margin-top:20px;">
+              <button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-chart-bar"></i> Generate</button>
+            </div>
+          </div>
+          <div id="report-output"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SIGNATURES ========== -->
+    <div class="page" id="page-signatures">
+      <div class="panel" style="max-width:700px; margin:0 auto;">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-pen-nib" style="color:var(--gold);margin-right:8px"></i>Official Signatures Setup</span>
+        </div>
+        <div class="panel-body">
+          <div class="info-note"><i class="fas fa-info-circle"></i> Draw and save official signatures below. These will appear on all printed receipts. Clear and redraw to update at any time.</div>
+
+          <!-- Treasurer Signature -->
+          <div style="margin-bottom:28px;">
+            <div class="divider-label"><i class="fas fa-user-tie"></i> Treasurer's Signature</div>
+            <div style="position:relative;display:inline-block;width:100%;">
+              <canvas id="canvas-treasurer" width="580" height="130"
+                style="border:2px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;width:100%;display:block;touch-action:none;"></canvas>
+              <div style="position:absolute;bottom:8px;right:8px;font-size:10px;color:var(--border);">Sign here</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;align-items:center;">
+              <button class="btn btn-outline btn-sm" onclick="clearSig('treasurer')"><i class="fas fa-eraser"></i> Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="saveSig('treasurer')"><i class="fas fa-save"></i> Save Signature</button>
+              <span id="status-treasurer" style="font-size:12px;color:var(--success);display:none;"><i class="fas fa-check-circle"></i> Saved</span>
+            </div>
+            <div id="preview-treasurer" style="margin-top:10px;display:none;">
+              <div style="font-size:11px;color:var(--slate);margin-bottom:4px;">Saved signature preview:</div>
+              <img id="img-treasurer" style="max-height:60px;border:1px solid var(--border);border-radius:4px;padding:4px;background:white;">
+            </div>
+          </div>
+
+          <!-- President Signature -->
+          <div>
+            <div class="divider-label"><i class="fas fa-user-shield"></i> Fellowship President's Signature</div>
+            <div style="position:relative;display:inline-block;width:100%;">
+              <canvas id="canvas-president" width="580" height="130"
+                style="border:2px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;width:100%;display:block;touch-action:none;"></canvas>
+              <div style="position:absolute;bottom:8px;right:8px;font-size:10px;color:var(--border);">Sign here</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;align-items:center;">
+              <button class="btn btn-outline btn-sm" onclick="clearSig('president')"><i class="fas fa-eraser"></i> Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="saveSig('president')"><i class="fas fa-save"></i> Save Signature</button>
+              <span id="status-president" style="font-size:12px;color:var(--success);display:none;"><i class="fas fa-check-circle"></i> Saved</span>
+            </div>
+            <div id="preview-president" style="margin-top:10px;display:none;">
+              <div style="font-size:11px;color:var(--slate);margin-bottom:4px;">Saved signature preview:</div>
+              <img id="img-president" style="max-height:60px;border:1px solid var(--border);border-radius:4px;padding:4px;background:white;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ========== RECEIPT PREVIEW OVERLAY ========== -->
+<div id="receipt-preview-overlay">
+  <div class="receipt-modal">
+    <div class="receipt-modal-header">
+      <span><i class="fas fa-receipt" style="color:var(--gold);margin-right:8px"></i>Receipt Preview</span>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-gold btn-sm" onclick="printPDF()"><i class="fas fa-file-pdf"></i> Save PDF</button>
+        <button id="close-preview" onclick="closePreview()">&#10005;</button>
+      </div>
+    </div>
+    <div id="receipt-print"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toast-msg">Saved!</span></div>
+
+<script>
+let receipts = JSON.parse(localStorage.getItem('nziaf_receipts') || '[]');
+let members = JSON.parse(localStorage.getItem('nziaf_members') || '[]');
+let receiptCounter = parseInt(localStorage.getItem('nziaf_counter') || '1');
+let currentReceiptData = null;
+
+// Set today's date
+document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget && event.currentTarget.classList.add('active');
+
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'records') renderRecords();
+  if (name === 'members') renderMembers();
+  if (name === 'accounts') refreshAccounts();
+  if (name === 'signatures') { setTimeout(() => { initSigPad('treasurer'); initSigPad('president'); }, 80); }
+}
+
+function fmt(n) { return '¥' + parseFloat(n||0).toFixed(2); }
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function calcTotal() {
+  const t = num('r-tithe') + num('r-offering') + num('r-ss') + num('r-mission') + num('r-building') + num('r-welfare') + num('r-program') + num('r-other');
+  document.getElementById('r-total-display').textContent = '¥ ' + t.toFixed(2);
+}
+
+function clearForm() {
+  ['r-name','r-member-id','r-contact','r-purpose','r-tithe','r-offering','r-ss','r-mission','r-building','r-welfare','r-program','r-other'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('r-total-display').textContent = '¥ 0.00';
+}
+
+function buildReceiptData() {
+  const name = document.getElementById('r-name').value.trim();
+  const date = document.getElementById('r-date').value;
+  if (!name || !date) { showToast('Please enter member name and date.', true); return null; }
+  const t = num('r-tithe'), o = num('r-offering'), ss = num('r-ss'), m = num('r-mission'), b = num('r-building'), w = num('r-welfare'), p = num('r-program'), oth = num('r-other');
+  const total = t + o + ss + m + b + w + p + oth;
+  if (total <= 0) { showToast('Please enter at least one contribution amount.', true); return null; }
+  return {
+    id: 'NZI-' + String(receiptCounter).padStart(5,'0'),
+    date, name,
+    memberId: document.getElementById('r-member-id').value,
+    contact: document.getElementById('r-contact').value,
+    method: document.getElementById('r-method').value,
+    purpose: document.getElementById('r-purpose').value,
+    tithe: t, offering: o, ss, mission: m, building: b, welfare: w, program: p, other: oth,
+    total
+  };
+}
+
+function previewReceipt() {
+  const data = buildReceiptData();
+  if (!data) return;
+  currentReceiptData = data;
+  renderReceiptHTML(data);
+  document.getElementById('receipt-preview-overlay').classList.add('show');
+}
+
+function saveReceipt() {
+  const data = buildReceiptData();
+  if (!data) return;
+  data.id = 'NZI-' + String(receiptCounter).padStart(5,'0');
+  receipts.push(data);
+  receiptCounter++;
+  localStorage.setItem('nziaf_receipts', JSON.stringify(receipts));
+  localStorage.setItem('nziaf_counter', receiptCounter);
+  clearForm();
+  showToast('Receipt ' + data.id + ' saved successfully!');
+  refreshDashboard();
+}
+
+function closePreview() {
+  document.getElementById('receipt-preview-overlay').classList.remove('show');
+}
+
+function renderReceiptHTML(d) {
+  const rows = [];
+  const addRow = (label, amount, cat) => {
+    if (amount > 0) rows.push(`<tr><td>${label}</td><td>${cat}</td><td class="amount">${fmt(amount)}</td></tr>`);
+  };
+  addRow('Tithe', d.tithe, 'Tithe');
+  addRow('General Offering', d.offering, 'Offering');
+  addRow('Sabbath School Offering', d.ss, 'Offering');
+  addRow('Mission & Evangelism Fund', d.mission, 'Mission');
+  addRow('Building / Facility Fund', d.building, 'Building');
+  addRow('Welfare & Community Aid', d.welfare, 'Welfare');
+  addRow('Church Program Fund', d.program, 'Program');
+  addRow('Other / Special Gift', d.other, 'Other');
+
+  const dateStr = new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+
+  document.getElementById('receipt-print').innerHTML = `
+    <div id="receipt-print">
+      <div class="receipt-watermark" style="background-image:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADhAOEDASIAAhEBAxEB/8QAHQABAAICAwEBAAAAAAAAAAAAAAcIBgkCAwUEAf/EAEAQAAEDAwMCBAQDBQYEBwAAAAEAAgMEBREGByEIEhMiMUEUMkJhUXGBCRVSU7EWJDOCkaIjYqGyNWNyc5KTwv/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwC5aIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAsS0tqsXzcLV1hgex1PYBRwOwOfHkjfI/n38rox9iCvM363Rs21Gg6i/wBxLJ66QGK2UPd5qqfHA+zG+rnew/EloMM/s9K663uza81JdpX1FTcryyWaocP8SYsc9/8A3jj7oLTIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICw3eDcjTe1+kJtRaiqOOWUtKwjxauXHDGD+p9AOSm8G5Gm9r9ITai1FUccspaVhHi1cuOGMH9T6Acla1tzNc6y3m3CZXV0c1ZWVUop7bbaVpe2Frj5Yo2+5Jxk+pPJ+wdmvNWa33x3OinmhlrrnXyimttupz5IGE+WNmeAB6ucce7iQr79NFjoNC2+6bY0D6eol09FSS3OrjGHT19S18kufTytYIGt4z2gZyo62u0Hpbph2trNxNdOgqdVzw+G2NrwSx7hltJAfdxx53j2BPytJPLoDvd21SzcTVV5f4tZdLvFNK8A9veWvJa3OcNaHNAGeBgILRoiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgLDd39x9N7YaQm1FqKowBllLSsI8Wqlxwxg/qfQDkpu/uPpvbDSE2otRVGAMspaVhHi1UuOGMH9T6Acla19zdday3n3CZW1sc1XWVMop7ZbKUF7YGuPlijb7knGT6k8n7A3M1zrHefcNldXRzVdZVSintlspgXtha4+WKNvuScZPqTyftb3ZbbDSHTjoGo3H3Hqqc6iMOHPGJPhe4HFNTj65Xchzh9wCGhznNl9sdIdOOgajcbceqpzqIw4e8Yf8L3Dimpx9cruQXD7gENDnGqG++7Opt49ZNq6tksVvikMVqtUJL2whxwOB88juMuxzwBgABBy3s3O1TvbuBBNJTzCAzClstogJf4Qe4BrQB80rz25djk4AwAALy9KumKXb7S9Zt72xSXe2sp629VEcncDWVLXOMWPwZGyIA582c4HvGGwG09i2J0NV7u7oCNl7gpjJT0zsONC1wwI2g8Gofnt+2cZ+Yr2+hjVFy1tWbk6tuoxU3S8QzFoOWxjscGxg+4a3taPsAgsyi4yPZHGZJHtYxoyXOOAFyQEREBERAREQEREBERAREQEREBERAREQEREBeHr3VVn0TpC5apv1R4Fvt8JkkIx3PPo1jQfVznENA/Ehe4qO/tDdf1Nz1ba9s7XK59PQNZV18UZyZKmQf8ACYQOctYe4D38X7BBBW6mvNXb07jtr6mnnqKiplFNarVTZkEDHHDYmDHmceMuxlx54GALdbL7Y6Q6cNAVG4+49VTu1EYcOeMSfC9wOKanH1yu5DnD7gENDnH4dg9tdMdPm3k+6m58scN/kh8kbmhz6JrxxTxN+qd/o4+wy3IaHudV3fbdnU28es21dWyWKgjeYrVaoSXthDjgcD55HcZdjJOAMAAAP3fbdnU28es21dWyWKgjkMVqtUJL2wtccDgfPK7jLsc8AYAAFm+nLZWwbPaVl3Y3YmpqS500PjxRVHLLYw8DgZ7p3ZAAGSCQ1uXFOnLZWwbPaVl3Y3YmpqS500PjxRVHLLYw8DgZ7p3ZAAGSCQ1uXFV16ld771u9qMNaJrfpiikJt1uLuSeR402OHSkE8chgJaM5c5wfvUdvRfd5dWRw08VRSaepZu21WtvL3OPAlkDc90rs4wMhoPa3Pmc68HSfttPtltFR2y5R+HebhIa+5Mznw5HtAEWf+RjWg447u4j1UP8ARp06yWaSj3I15ROZcgBLZ7ZM3BpsjieVv8z+Fp+T1Pmx2W6QdVbS01dRz0VbTw1NLURuimhmYHskY4Yc1zTwQQSCD6qANrta1Wh+oG8bGXmsnqrRK0VmlqipkMksMbo/FNIXnJcxo7wwuOR4fbk5aBYRa7dS62Gs+uW0X6yVDpaNupqChpJIiCHwRyRxPc0j1Y/D3Z/hcg2JIsU2x1ezV1quPisjiudmudTablFHntbPC/tLm557Xt7Xjk4DsZJBKytAREQEREBERAREQEREBERAREQEREBERAVOtn9J0WqupnczdnWRhZZtJXepbBJUY8MTQuc1shJ9oYow77FzCPlVxVSbq5uFRttt9cdA0LjDUaz1RcL3WyMcMvpXSNc1pxyO5xY38oXA8HkIZ6j93LxvDr0yU7ahljpZTBZqBuSS0nAkc0esr+Mj24aM4ybHdOWytg2e0rLuxuxNTUlzpofHiiqOWWxh4HAz3TuyAAMkEhrcuK8PpG2ssOhNFyb57mS09HEyn+JtbahuW00J9Kgj1dI/IEbQCcEEZc8BsI9Su9963e1GGsE1v0xRSE263F3JPI8abHDpSCeOQwEtGcuc4HUrvfet3tRhrRNb9MUUhNutxdyTyPGmxw6UgnjkMBLRnLnOnvo96bvgPg9w9wqD++cTWm0zs/wPds0zT9foWsPy+p82A10e9N3wPwe4e4VB/e/LNabVO3/B92zzNP1+7WH5fU+bAbcBARFWLq+6imaJgqND6Jq2P1LKztraxhyLc0j0H/mkH/KOfXGA+HrS3/g0/bK3bjRtd33ypYYrpWQuyKKM/NE0/wA1w4J+gE/UR2xN0F7ey3ncGXcO5gQWLTLHubNIcMkqnMIAyRjDGOLycjB8P2KjnYXaPUu8Wr3U1K6WC2wyCS6XWUFzYgTkgE/PI7nDc/c4GSp/6s9fad2x24p9ituvDp5HQCO6ujd3Ogp3DJY5w9ZZc5dn6SePOMBkfQ/qh+q9yN37xC+T4C43SGugY7jsEklT28exLQ0H/wBIVqFVLoWoY9FaOs7rlTNirte1VVNSud5X+DSMHhjBHIOZ3A/gWkeqtagIiICIiAiIgIiICIiAiIgIiICIiAiIgKm3Udo87g9bWjdK14Jt81rgknGDh1PHJUSyNyPTuDHNz7Fw/JXJUba+0hUHdvSG5FspRPPbYqm23BjW5e6nmjd4Tx9mS4z/AMsjj9KCn3XJurNqrXb9B2ecR6d05L4L44+Gz1bQWvcQOMM5Y0exDz7jEi9G3TnHDFQ7ka9og+ZwbPZ7ZM3iMeraiUH1d7tb7cOPOO2FeknQ0W6G+cP9oGCuoKJsl2uTZm9zakh4DWO9iHSPaSD6tDgtl6AiIghbq73dftZt4GWmVo1JeS+ntxIB8AADxJ8Hg9oIAB+pzcggEKkOw20upt5taSRRyzxW6OXxrtdpsv7O45IyfnldzgZ/EnhTT1a6Sv253VlYdD2yUt77RCPEcC6Oli75XyyuH2H5dxDW59Fnm9W52lunHb6k2z23ggdqPwM5cA/4XuHNTP7Pmf6taePQkBoa1wfu+O6ek+nnQcO2m2lPTt1D4PAGJPge4c1E5+uZ3Ba0/Ykdoa11Wun/AG0vW8+6HwtVPVyULZfjb5cnkucGOdl2Xn1lkOQM5PzOwQ0ry9rdA6w3l3AfQUEk1VVVEhqLnc6pzntha53mlkceXOJzgerj+pFtt29W6T6Y9o4tv9BuYdVXCEuZKQHStc4drqyb27uMMaeMgDBa0hBxn1LQah62ND6N0tHA2yaEt9ZTObTgdkMjqV8cjG447WYhjx7Oa4K0ypn+zn0bVTVuo9ybi2R/iD920ksjiXSuLmyTvOfXkRDu9yXj2KuYgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiIKs7E6TG0PVTqjS1bEIbbqijkq9PVHb2xysZL3up2/i9jXOyPXDA7ADgrTLyNVaasmqLfHQ3ygZVRwzNqKd4c6OWnmb8ssUjSHxSDJw9hDhk8r1x6ICIiCt/UFquDZ/VOqNynU0E2oLxa6Sy6dZJj1YXyVEhHqY2l0JI93NaM+bIpxtnobWe9e4stLSSzVVXVSmpul0qcuZA1xy6SQ+5POG+pPAwMkTj1oWbUe4fU9p7QdmBllfbYY6aNziI4u98j5ZXfgA1uXEc4YPVSdrrVuielPa2l0jpaCnuOrKyLxGMkHnmkPBqqjByGZBDWZ5x2g4DnAOe4GsNCdK22MGkdI00Ndqiri8SKKQgySvIwaqpI5DMghreM47W4Ac5tOdF6e1nvfuuKL4ue4Xm6zGor6+cdzYIxgPlfjhrGjADRgfK1uMgL5tO2XXO825hpqZ0951BdZTNVVU7vLG3gOlkcBhkbRgYAwB2taM9rVsg2F2k09tJpEWm0tFVcagNfcrk9gElVIB/tY3J7WZ4yTyS4kMn2/0padEaNtelbHD4dBboBEzOO559XPdj1c5xLifxJXuoiAiIgIiICIiAiIgIiICIiAiIgIiICjDVfUBs9pmolprnri3vqInujfFRskqnNeMgtPhNcAcjHJCgXrC6kQwVm3m3lee/wA0N2usDvT2dDC4e/qHPH5D3Kpgg2Aah60Ns6F74rTZ9RXZzflkEEcMTv1c/u/2qN9Q9b+oZo3N0/oS10LvpfXVr6kfmWsbH/VVHRBOWouq7em7O/u+oKOzxkEGOgoIgD/mkD3D9CFH163T3KvMjn3LXupZ+71YblK1n6MDg0foFhyIM706d4auCK76eOu54Xk+HV0HxbmuIODh7ODggj19Qrw9G2ttx9S6butn3JtV2hrbU6I0tfX0T4H1UT+/yu7mgOcws+b1IcM8jJj3pf6g9rtDbIWHS+pL3VU10o3VPjRMoZpA3vqJHtw5rSD5XAqwW1W7mhtz5rhFo65z1rrc2N1SJKWSHtD+7tx3gZ+Q+iDAtx3z6G3I1juvBpq4327Cz0dmsVLS0ssxlld4kkpcGA4YO2LL/YBzQcuANMTt9vHufuM6e56av0l4vNT3T1twoZYII+OXPe5oDGNaMAD0ADWg8BbDNR7s6LsO4lDt/XVda7UVeIzT0kFFLL3B5Iae5re0Dykkk4ABJwAvh3/3f0/tHpM3K4ltXdakObbba1+H1Dx7n+GNuR3O/QZJAQRzNJt70kbTiKIMuuqLi3POGz3KcD1Pr4cDCeB7A/U5xJrtaerzeSiq5pqmts1yjkkL2w1NuaGRAn5GmMsd2j27iT+JKiDcPWWoNe6rq9TamrnVdfUu/JkTB8sbG/Swew/MnJJJx5BcLT3XDcGeGzUGgKWf+ZLQ3B0WPuGPY7P5d36qR9O9ZO1VxeI7nSahszscvnpGyx/oY3ud/tWvZEG1nQ+9G12ta2Cg05rO3VVbUEthpZO+CaQgEkNZIGuJwCeB7LP1pspaiekqoqqlmkgnheJIpY3Fr2OByHNI5BB5BC2AdI/UTT6+pING6xqY4NVws7aeodhrLkxo9R7CUAct9/Ue4AWTRfLd66C12qsudV3fD0kD55e0ZPaxpccD3OAsJsGvqms1RX2espKdrqCeCCsZC9rjTOmcWR8h5c8F47cvZESMuaHAHASAiIgIiICIiAiIgIiICpr1hdSPb8Zt5t7X+bmG7XaB/p7OghcP9HPH3A9yvr6ruoC4XGprNstqfiq6qIdFdbjQMdI4D0dDCWZP4hzx6eg9yK26d2J3gv7e637fXxjc4DqyEUgP5GYtyPv6II4RWP090bbrXDw33Or0/Z2H52zVbpZGj7CNjmk/5gpI090PW5jg/UOv6qob7xUNA2Ij/O97s/8AxQUoRbG9PdIuzVsja2tt93vbwc99bcHtJ/SHwwpI09tLtjYHsktOgtO080fyTGgjfK38nuBd/wBUGq+xaev9+kMdjsdzujwcFtHSPmIP4YaCsil2k3TigE8m2+rmsIzn9zT5H5jsyP1W2GKOOKNscTGsY0YDWjAA/JckGm6vo6ugq5KOupZ6WpiPbJDNGWPYfwLTyFbz9mf/AOJ66/8AZof+6dWm3R210buTZH2vVdnhqvIWwVbAG1NMT9UcmMt5wcctOOQRwoT6Qtt7ntXutuNpW4yioiFPQVFDVAYFTTudUBj8exy1zSPZzTjIwSHqbmXCwbe7wau3l1JCJv3TY6O12aAuANTWTeK5zGH1Du1rQTzhj3nBwqO6uv2tt2td1V5rYa693mq5bT0cD5PBiB8sccbclrG5wB98kkkk3Z3y29uu9O/ts0nXVM9HovTVsjrrg+I4dLUTveBG327iyMc48oD/AHcAZ10XpLTei7HFZdLWaktVDEABHAzBeQMdz3HzPd+LnEk+5Qat3bR7qNp/Hdtvq8M982aoyP07M4WL3e03Wz1Pwt3tlbb5/wCVVQOif/o4ArcWuqqpqeqhMNVBFPEfVkjA5p/QoNNiLazqLZbae/iT95bf6fc+T55IKRtPI77l8Xa7P3yo41F0e7Q3Pm3svtkIOcUld3tP5+M15/0IQa7V20tRPSVUVVSzyQVELxJFLG8texwOQ5pHIIIyCFcfUXQ95nyae3A8uPJDX2/n9ZGP/wDwo4v/AEfbw22Jz6KKw3kj0ZRV/a4//c2Mf9UE/dJ3UHR7j25mh9byQM1O2ExxySACO6xgHPHoJAPmb9QyR7gThbNGW2iuUNaaqtqTASYo53sIBJyC9waHykeoMjn8+b5vMtaF32f3g0pWxVU+htS008DxLHU0VM+YROaQQ4SQ9waQcEHI9OPRXK6Vd/8A+2rWaG13m3a0pGdrHTM8IXFoGc9px2zAcuZ7jzN4yGhYpERAREQEREBERAREQdNHSUtHF4NJTQ08f8EUYYP9Au5EQEREBERAREQFwEMQnM4iZ4paGGTtHcWgkgZ/DJPH3XNEHBkMTJZJWRMbJJjvcGgF2BgZPvwuaIgIiICIiAiIgLpnpKWokilnpoZXxO7o3PYHFh/EE+hXciAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiD//Z)"></div>
+      <div class="r-logo-area">
+        <div class="r-logo-icon"><img src="data:image/jpeg;base64,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" alt="SDA Logo"></div>
+        <div class="r-church-name">Nanjing-Zhenjiang International Adventist Fellowship</div>
+        <div class="r-sub">Seventh-day Adventist Fellowship &nbsp;|&nbsp; Nanjing, China</div>
+      </div>
+      <hr class="r-divider-gold">
+      <div class="r-receipt-title"><i class="fas fa-file-invoice-dollar"></i> &nbsp; Official Contribution Receipt</div>
+      <div class="r-meta">
+        <span><strong>Receipt No:</strong> ${d.id}</span>
+        <span><strong>Date:</strong> ${dateStr}</span>
+        <span><strong>Method:</strong> ${d.method}</span>
+      </div>
+      <div class="r-member-box">
+        <div class="r-name"><i class="fas fa-user" style="color:var(--gold);margin-right:6px;font-size:12px"></i>${d.name}</div>
+        <div class="r-member-id">${d.memberId ? 'Member ID: ' + d.memberId : 'Guest Contributor'}${d.contact ? ' &nbsp;|&nbsp; ' + d.contact : ''}</div>
+      </div>
+      <table class="r-contributions-table">
+        <thead>
+          <tr><th>Description</th><th>Category</th><th style="text-align:right">Amount</th></tr>
+        </thead>
+        <tbody>
+          ${rows.join('')}
+        </tbody>
+      </table>
+      <div class="r-total-row">
+        <div class="r-total-box">
+          <div><div class="t-label">Total Contribution</div><div class="t-val">${fmt(d.total)}</div></div>
+        </div>
+      </div>
+      ${d.purpose ? `<div class="r-purpose"><i class="fas fa-info-circle" style="margin-right:6px;color:var(--gold)"></i><strong>Purpose / Remark:</strong> ${d.purpose}</div>` : ''}
+      <div class="r-sig-area">
+        <div class="r-sig">
+          ${localStorage.getItem('sig_treasurer') ? `<img src="${localStorage.getItem('sig_treasurer')}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;">` : '<div style="height:50px"></div>'}
+          <div class="r-sig-line"></div>Treasurer's Signature
+        </div>
+        <div class="r-sig">
+          ${localStorage.getItem('sig_president') ? `<img src="${localStorage.getItem('sig_president')}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;">` : '<div style="height:50px"></div>'}
+          <div class="r-sig-line"></div>Fellowship President
+        </div>
+      </div>
+      <div class="r-verse-box">
+        <div class="r-verse-text">"Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it."</div>
+        <div class="r-verse-ref">— Malachi 3:10 (NIV)</div>
+      </div>
+      <div class="r-footer">
+        <div>
+          <i class="fab fa-facebook-square"></i> Nanjing-Zhenjiang Int'l Adventist Fellowship &nbsp;
+          <i class="fab fa-instagram"></i> @nziaf_china
+        </div>
+        <div>By The Treasury Department</div>
+      </div>
+    </div>`;
+}
+
+function printPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const d = currentReceiptData;
+  const dateStr = new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+
+  // Colors
+  const navy = [26, 39, 68];
+  const gold = [184, 134, 11];
+  const cream = [250, 248, 243];
+  const light = [240, 237, 229];
+  const slate = [74, 85, 104];
+
+  let y = 18;
+  const pw = 210, ml = 18, mr = 18, cw = pw - ml - mr;
+
+  // Border
+  doc.setDrawColor(...navy); doc.setLineWidth(0.8);
+  doc.rect(10, 10, 190, 277);
+  doc.setDrawColor(...gold); doc.setLineWidth(0.4);
+  doc.rect(12, 12, 186, 273);
+
+  // Watermark
+  const wm = new Image(); wm.src = 'data:image/jpeg;base64,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';
+  doc.saveGraphicsState();
+  doc.setGState(new doc.GState({opacity: 0.07}));
+  doc.addImage(wm, 'JPEG', 55, 80, 100, 100);
+  doc.restoreGraphicsState();
+
+  // Logo image at top center (no circle)
+  const logoImg = new Image(); logoImg.src = 'data:image/jpeg;base64,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';
+  doc.addImage(logoImg, 'JPEG', pw/2 - 18, y - 4, 36, 36);
+  y += 38;
+
+  // Church name
+  doc.setFillColor(...navy);
+  doc.rect(ml, y-2, cw, 12, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11); doc.setFont('times','bold');
+  doc.text('NANJING-ZHENJIANG INTERNATIONAL ADVENTIST FELLOWSHIP', pw/2, y+5.5, {align:'center'});
+  y += 14;
+
+  doc.setFillColor(...light); doc.rect(ml, y, cw, 6, 'F');
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(...slate);
+  doc.text('Seventh-day Adventist Fellowship  |  Nanjing, China', pw/2, y+4, {align:'center'});
+  y += 9;
+
+  // Gold line
+  doc.setDrawColor(...gold); doc.setLineWidth(0.8);
+  doc.line(ml, y, ml+cw, y);
+  y += 5;
+
+  // Receipt title
+  doc.setFillColor(...navy);
+  doc.roundedRect(ml, y, cw, 9, 1, 1, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('times','bold');
+  doc.text('OFFICIAL CONTRIBUTION RECEIPT', pw/2, y+6, {align:'center'});
+  y += 13;
+
+  // Meta row
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(...navy);
+  doc.text('Receipt No:', ml, y);
+  doc.setFont('helvetica','normal'); doc.text(d.id, ml+24, y);
+  doc.setFont('helvetica','bold'); doc.text('Date:', 105, y);
+  doc.setFont('helvetica','normal'); doc.text(dateStr, 114, y);
+  y += 5;
+  doc.setFont('helvetica','bold'); doc.text('Method:', ml, y);
+  doc.setFont('helvetica','normal'); doc.text(d.method, ml+18, y);
+  y += 7;
+
+  // Member box
+  doc.setFillColor(...cream); doc.setDrawColor(...gold); doc.setLineWidth(0.3);
+  doc.rect(ml, y, cw, d.memberId || d.contact ? 13 : 9, 'FD');
+  doc.setFillColor(...gold); doc.rect(ml, y, 2, d.memberId || d.contact ? 13 : 9, 'F');
+  doc.setFontSize(11); doc.setFont('times','bold'); doc.setTextColor(...navy);
+  doc.text(d.name, ml+6, y+6);
+  if (d.memberId || d.contact) {
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...slate);
+    const sub = (d.memberId ? 'Member ID: ' + d.memberId : '') + (d.contact ? '  |  ' + d.contact : '');
+    doc.text(sub, ml+6, y+11);
+    y += 16;
+  } else y += 12;
+
+  y += 4;
+
+  // Table header
+  doc.setFillColor(...navy);
+  doc.rect(ml, y, cw, 7, 'F');
+  doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+  doc.text('DESCRIPTION', ml+3, y+4.8);
+  doc.text('CATEGORY', ml+100, y+4.8);
+  doc.text('AMOUNT', ml+cw-3, y+4.8, {align:'right'});
+  y += 8;
+
+  // Table rows
+  const rows = [];
+  if (d.tithe > 0) rows.push(['Tithe', 'Tithe', fmt(d.tithe)]);
+  if (d.offering > 0) rows.push(['General Offering', 'Offering', fmt(d.offering)]);
+  if (d.ss > 0) rows.push(['Sabbath School Offering', 'Offering', fmt(d.ss)]);
+  if (d.mission > 0) rows.push(['Mission & Evangelism Fund', 'Mission', fmt(d.mission)]);
+  if (d.building > 0) rows.push(['Building / Facility Fund', 'Building', fmt(d.building)]);
+  if (d.welfare > 0) rows.push(['Welfare & Community Aid', 'Welfare', fmt(d.welfare)]);
+  if (d.program > 0) rows.push(['Church Program Fund', 'Program', fmt(d.program)]);
+  if (d.other > 0) rows.push(['Other / Special Gift', 'Other', fmt(d.other)]);
+
+  rows.forEach((row, i) => {
+    if (i % 2 === 0) { doc.setFillColor(252,250,246); doc.rect(ml, y, cw, 6.5, 'F'); }
+    doc.setFillColor(240,237,229); doc.rect(ml, y, cw, 6.5);
+    doc.setTextColor(...navy); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    doc.text(row[0], ml+3, y+4.5);
+    doc.setTextColor(...slate); doc.text(row[1], ml+100, y+4.5);
+    doc.setFont('helvetica','bold'); doc.setTextColor(...navy);
+    doc.text(row[2], ml+cw-3, y+4.5, {align:'right'});
+    doc.setDrawColor(226,217,200); doc.setLineWidth(0.2);
+    doc.line(ml, y+6.5, ml+cw, y+6.5);
+    y += 6.5;
+  });
+
+  y += 4;
+
+  // Total
+  doc.setFillColor(...navy);
+  const tw = 70;
+  doc.roundedRect(ml+cw-tw, y, tw, 11, 1, 1, 'F');
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
+  doc.text('TOTAL CONTRIBUTION', ml+cw-tw+4, y+4);
+  doc.setFontSize(12); doc.setFont('times','bold'); doc.setTextColor(212, 160, 23);
+  doc.text(fmt(d.total), ml+cw-4, y+9, {align:'right'});
+  y += 15;
+
+  // Purpose
+  if (d.purpose) {
+    doc.setFillColor(255, 248, 230); doc.setDrawColor(230, 201, 110); doc.setLineWidth(0.3);
+    doc.rect(ml, y, cw, 9, 'FD');
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(...navy);
+    doc.text('Purpose / Remark: ', ml+3, y+4);
+    doc.setFont('helvetica','normal'); doc.text(d.purpose, ml+35, y+4);
+    y += 13;
+  }
+
+  // Signatures - 2 only
+  y += 4;
+  const sigW = cw / 2;
+  const sigs2 = ["Treasurer's Signature", "Fellowship President"];
+  sigs2.forEach((s, i) => {
+    const x = ml + i * sigW + sigW * 0.1;
+    // Draw saved signature if available
+    const sigKey = i === 0 ? 'sig_treasurer' : 'sig_president';
+    const savedSig = localStorage.getItem(sigKey);
+    if (savedSig) {
+      doc.addImage(savedSig, 'PNG', x, y, sigW * 0.78, 16);
+    }
+    doc.setDrawColor(...navy); doc.setLineWidth(0.4);
+    doc.line(x, y+18, x + sigW*0.8, y+18);
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...slate);
+    doc.text(s, x + (sigW*0.4), y+22, {align:'center'});
+  });
+  y += 28;
+
+  // Verse
+  doc.setDrawColor(...gold); doc.setLineWidth(0.8);
+  doc.line(ml, y, ml+cw, y);
+  y += 5;
+  doc.setFontSize(8.5); doc.setFont('times','italic'); doc.setTextColor(...navy);
+  const verse = '"Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it."';
+  const splitVerse = doc.splitTextToSize(verse, cw);
+  doc.text(splitVerse, pw/2, y, {align:'center'});
+  y += splitVerse.length * 4 + 3;
+  doc.setFont('times','bold'); doc.setTextColor(...gold[0], ...gold.slice(1));
+  doc.setTextColor(184,134,11);
+  doc.text('— Malachi 3:10 (NIV)', pw/2, y, {align:'center'});
+  y += 8;
+
+  // Footer
+  doc.setDrawColor(226,217,200); doc.setLineWidth(0.3);
+  doc.line(ml, y, ml+cw, y);
+  y += 4;
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...slate);
+  doc.text('Facebook / Instagram: Nanjing-Zhenjiang Int\'l Adventist Fellowship  |  @nziaf_china', ml, y+3);
+  doc.text('By The Treasury Department', ml+cw, y+3, {align:'right'});
+
+  doc.save(`Receipt_${d.id}_${d.name.replace(/\s+/g,'_')}.pdf`);
+  showToast('PDF downloaded: Receipt_' + d.id);
+}
+
+function renderRecords() {
+  const search = (document.getElementById('search-input').value || '').toLowerCase();
+  const filter = document.getElementById('filter-type').value;
+  let filtered = receipts.filter(r => {
+    const matchSearch = r.name.toLowerCase().includes(search) || r.id.toLowerCase().includes(search);
+    const matchFilter = !filter || (filter === 'tithe' && r.tithe > 0) || (filter === 'offering' && r.offering > 0) || (filter === 'mission' && r.mission > 0) || (filter === 'building' && r.building > 0) || (filter === 'welfare' && r.welfare > 0) || (filter === 'program' && r.program > 0) || (filter === 'other' && r.other > 0);
+    return matchSearch && matchFilter;
+  });
+
+  document.getElementById('records-count').textContent = filtered.length + ' record(s)';
+  const tbody = document.getElementById('records-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="14"><div class="empty-state" style="padding:32px"><i class="fas fa-search" style="font-size:28px;display:block;margin-bottom:8px;color:var(--border)"></i>No records found.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${r.date}</td>
+      <td>${r.name}</td>
+      <td>${r.tithe > 0 ? fmt(r.tithe) : '-'}</td>
+      <td>${r.offering > 0 ? fmt(r.offering) : '-'}</td>
+      <td>${r.ss > 0 ? fmt(r.ss) : '-'}</td>
+      <td>${r.mission > 0 ? fmt(r.mission) : '-'}</td>
+      <td>${r.building > 0 ? fmt(r.building) : '-'}</td>
+      <td>${r.welfare > 0 ? fmt(r.welfare) : '-'}</td>
+      <td>${r.program > 0 ? fmt(r.program) : '-'}</td>
+      <td>${r.other > 0 ? fmt(r.other) : '-'}</td>
+      <td><strong>${fmt(r.total)}</strong></td>
+      <td>${r.method}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="viewReceipt('${r.id}')"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteReceipt('${r.id}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+
+  const totals = filtered.reduce((a, r) => ({ tithe: a.tithe+r.tithe, offering: a.offering+r.offering, mission: a.mission+r.mission, building: a.building+r.building, total: a.total+r.total }), {tithe:0,offering:0,mission:0,building:0,total:0});
+  document.getElementById('sum-tithe').textContent = fmt(totals.tithe);
+  document.getElementById('sum-offering').textContent = fmt(totals.offering);
+  document.getElementById('sum-mission').textContent = fmt(totals.mission);
+  document.getElementById('sum-building').textContent = fmt(totals.building);
+  document.getElementById('sum-total').textContent = fmt(totals.total);
+}
+
+function viewReceipt(id) {
+  const r = receipts.find(x => x.id === id);
+  if (!r) return;
+  currentReceiptData = r;
+  renderReceiptHTML(r);
+  document.getElementById('receipt-preview-overlay').classList.add('show');
+}
+
+function deleteReceipt(id) {
+  if (!confirm('Delete receipt ' + id + '? This cannot be undone.')) return;
+  receipts = receipts.filter(r => r.id !== id);
+  localStorage.setItem('nziaf_receipts', JSON.stringify(receipts));
+  renderRecords();
+  refreshDashboard();
+  showToast('Receipt deleted.');
+}
+
+function refreshDashboard() {
+  const t = receipts.reduce((a,r) => ({tithe:a.tithe+r.tithe, offering:a.offering+r.offering+r.ss, mission:a.mission+r.mission, total:a.total+r.total}), {tithe:0,offering:0,mission:0,total:0});
+  document.getElementById('dash-tithe').textContent = fmt(t.tithe);
+  document.getElementById('dash-offering').textContent = fmt(t.offering);
+  document.getElementById('dash-mission').textContent = fmt(t.mission);
+  document.getElementById('dash-total').textContent = fmt(t.total);
+  document.getElementById('dash-receipt-count').textContent = receipts.length + ' receipt(s) issued';
+
+  const max = Math.max(t.tithe, t.offering, t.mission, receipts.reduce((a,r)=>a+r.building,0), receipts.reduce((a,r)=>a+r.other,0)) || 1;
+  const funds = [
+    ['Tithe', t.tithe, 'fill-tithe'],
+    ['Offerings', t.offering, 'fill-offering'],
+    ['Mission', t.mission, 'fill-mission'],
+    ['Building', receipts.reduce((a,r)=>a+r.building,0), 'fill-building'],
+    ['Other', receipts.reduce((a,r)=>a+r.other,0), 'fill-other'],
+  ];
+
+  document.getElementById('dash-chart').innerHTML = funds.map(([l,v,c]) => `
+    <div class="chart-row">
+      <div class="chart-label">${l}</div>
+      <div class="chart-bar-track"><div class="chart-bar-fill ${c}" style="width:${Math.round(v/max*100)}%">${v>0?fmt(v):''}</div></div>
+      <div class="chart-value">${fmt(v)}</div>
+    </div>`).join('');
+
+  const recent = receipts.slice().reverse().slice(0, 5);
+  document.getElementById('dash-recent').innerHTML = recent.length ? `<table style="font-size:12px;width:100%;border-collapse:collapse">
+    ${recent.map(r=>`<tr><td style="padding:8px 14px;border-bottom:1px solid var(--border)">${r.id}</td><td style="padding:8px 14px;border-bottom:1px solid var(--border)">${r.name}</td><td style="padding:8px 14px;border-bottom:1px solid var(--border);font-weight:700">${fmt(r.total)}</td><td style="padding:8px 14px;border-bottom:1px solid var(--border)"><button class="btn btn-outline btn-sm" onclick="viewReceipt('${r.id}')"><i class='fas fa-eye'></i></button></td></tr>`).join('')}
+  </table>` : `<div class="empty-state" style="padding:32px"><i class="fas fa-receipt" style="font-size:28px;display:block;margin-bottom:8px;color:var(--border)"></i>No receipts yet</div>`;
+}
+
+function refreshAccounts() {
+  const sum = (key) => receipts.reduce((a,r) => a + (r[key]||0), 0);
+  const count = (key) => receipts.filter(r => (r[key]||0) > 0).length;
+  document.getElementById('ac-tithe').textContent = fmt(sum('tithe'));
+  document.getElementById('ac-tithe-c').textContent = count('tithe') + ' contributors';
+  document.getElementById('ac-offering').textContent = fmt(sum('offering'));
+  document.getElementById('ac-offering-c').textContent = count('offering') + ' contributors';
+  document.getElementById('ac-ss').textContent = fmt(sum('ss'));
+  document.getElementById('ac-ss-c').textContent = count('ss') + ' contributors';
+  document.getElementById('ac-mission').textContent = fmt(sum('mission'));
+  document.getElementById('ac-mission-c').textContent = count('mission') + ' contributors';
+  document.getElementById('ac-building').textContent = fmt(sum('building'));
+  document.getElementById('ac-building-c').textContent = count('building') + ' contributors';
+  document.getElementById('ac-welfare').textContent = fmt(sum('welfare'));
+  document.getElementById('ac-welfare-c').textContent = count('welfare') + ' contributors';
+  document.getElementById('ac-program').textContent = fmt(sum('program'));
+  document.getElementById('ac-program-c').textContent = count('program') + ' contributors';
+  document.getElementById('ac-other').textContent = fmt(sum('other'));
+  document.getElementById('ac-other-c').textContent = count('other') + ' contributors';
+  const grand = receipts.reduce((a,r)=>a+r.total,0);
+  document.getElementById('ac-grand').textContent = fmt(grand);
+  document.getElementById('ac-grand-c').textContent = receipts.length + ' total receipts';
+}
+
+function renderMembers() {
+  const tbody = document.getElementById('members-tbody');
+  if (!members.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:32px"><i class="fas fa-users" style="font-size:28px;display:block;margin-bottom:8px;color:var(--border)"></i>No members registered yet.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = members.map(m => {
+    const memberReceipts = receipts.filter(r => r.name === m.name || r.memberId === m.id);
+    const totalContrib = memberReceipts.reduce((a,r)=>a+r.total,0);
+    return `<tr>
+      <td>${m.id||'-'}</td><td><strong>${m.name}</strong></td><td>${m.phone||'-'}</td><td>${m.email||'-'}</td>
+      <td><strong>${fmt(totalContrib)}</strong></td><td>${memberReceipts.length}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteMember('${m.name}')"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addMember() { document.getElementById('member-form').style.display = 'grid'; }
+function cancelMember() { document.getElementById('member-form').style.display = 'none'; }
+function saveMember() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { showToast('Name is required.', true); return; }
+  members.push({ name, id: document.getElementById('m-id').value, phone: document.getElementById('m-phone').value, email: document.getElementById('m-email').value });
+  localStorage.setItem('nziaf_members', JSON.stringify(members));
+  document.getElementById('member-form').style.display = 'none';
+  ['m-name','m-id','m-phone','m-email'].forEach(id=>document.getElementById(id).value='');
+  renderMembers();
+  showToast('Member added.');
+}
+function deleteMember(name) {
+  if (!confirm('Remove member: ' + name + '?')) return;
+  members = members.filter(m => m.name !== name);
+  localStorage.setItem('nziaf_members', JSON.stringify(members));
+  renderMembers();
+}
+
+function generateReport() {
+  const from = document.getElementById('rep-from').value;
+  const to = document.getElementById('rep-to').value;
+  let filtered = receipts;
+  if (from) filtered = filtered.filter(r => r.date >= from);
+  if (to) filtered = filtered.filter(r => r.date <= to);
+  if (!filtered.length) { document.getElementById('report-output').innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>No records in this range.</p></div>'; return; }
+  const keys = ['tithe','offering','ss','mission','building','welfare','program','other'];
+  const labels = ['Tithe','General Offering','Sabbath School','Mission','Building','Welfare','Program','Other'];
+  const totals = keys.map(k => filtered.reduce((a,r)=>a+(r[k]||0),0));
+  const grand = totals.reduce((a,v)=>a+v,0);
+  document.getElementById('report-output').innerHTML = `
+    <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--navy);margin-bottom:12px;">
+      Financial Report: ${from||'Beginning'} — ${to||'Today'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <table><thead><tr><th>Fund</th><th>Amount</th><th>% of Total</th></tr></thead>
+      <tbody>
+      ${keys.map((k,i)=>`<tr><td>${labels[i]}</td><td><strong>${fmt(totals[i])}</strong></td><td>${grand>0?Math.round(totals[i]/grand*100):0}%</td></tr>`).join('')}
+      <tr style="background:var(--navy);color:white"><td style="color:white"><strong>Grand Total</strong></td><td style="color:var(--gold-light)"><strong>${fmt(grand)}</strong></td><td style="color:white">${filtered.length} receipts</td></tr>
+      </tbody></table>
+      <div class="chart-bar">
+        ${keys.map((k,i)=>`<div class="chart-row"><div class="chart-label" style="font-size:11px">${labels[i]}</div><div class="chart-bar-track"><div class="chart-bar-fill fill-tithe" style="width:${grand>0?Math.round(totals[i]/grand*100):0}%;background:${['#1a5276','#2d6a4f','#1a5276','#922b21','#6c3483','#d35400','#b8860b','#7d6608'][i]}">${totals[i]>0?fmt(totals[i]):''}</div></div></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function showToast(msg, err) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.style.background = err ? '#c53030' : 'var(--success)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ===================== SIGNATURE PAD =====================
+function initSigPad(id) {
+  const canvas = document.getElementById('canvas-' + id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+  canvas.height = 130 * (window.devicePixelRatio || 1);
+  canvas.style.height = '130px';
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  ctx.strokeStyle = '#1a2744'; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  let drawing = false, lastX = 0, lastY = 0;
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [(src.clientX - r.left) * (window.devicePixelRatio||1) / (window.devicePixelRatio||1), (src.clientY - r.top) * (window.devicePixelRatio||1) / (window.devicePixelRatio||1)];
+  }
+  function getPosCorrected(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [src.clientX - r.left, src.clientY - r.top];
+  }
+  function start(e) { e.preventDefault(); drawing = true; [lastX, lastY] = getPosCorrected(e); }
+  function move(e) {
+    e.preventDefault(); if (!drawing) return;
+    const [x, y] = getPosCorrected(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+    [lastX, lastY] = [x, y];
+  }
+  function stop(e) { e.preventDefault(); drawing = false; ctx.beginPath(); }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', stop);
+
+  const saved = localStorage.getItem('sig_' + id);
+  if (saved) {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.offsetWidth, 130); };
+    img.src = saved;
+    document.getElementById('preview-' + id).style.display = 'block';
+    document.getElementById('img-' + id).src = saved;
+    document.getElementById('status-' + id).style.display = 'inline-flex';
+  }
+}
+
+function clearSig(id) {
+  const canvas = document.getElementById('canvas-' + id);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('status-' + id).style.display = 'none';
+  document.getElementById('preview-' + id).style.display = 'none';
+}
+
+function saveSig(id) {
+  const canvas = document.getElementById('canvas-' + id);
+  const data = canvas.toDataURL('image/png');
+  localStorage.setItem('sig_' + id, data);
+  document.getElementById('status-' + id).style.display = 'inline-flex';
+  document.getElementById('img-' + id).src = data;
+  document.getElementById('preview-' + id).style.display = 'block';
+  showToast('Signature saved successfully!');
+}
+
+// Override showPage to handle signatures init
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+refreshDashboard();
+</script>
+</body>
+</html>
